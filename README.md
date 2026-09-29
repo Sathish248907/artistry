@@ -60,5 +60,8 @@ Photographs are free-licence images from [Unsplash](https://unsplash.com/license
 ## Deployment
 
 Every push to `main` builds and publishes the site to GitHub Pages via `.github/workflows/deploy.yml`.
-The build runs with `VITE_BASE=/<repo-name>/` so assets and routes resolve under the Pages sub-path, and
-`404.html` is a copy of `index.html` so deep links (e.g. `/products`) load the app.
+The build runs with `VITE_BASE=/<repo-name>/` so assets and routes resolve under the Pages sub-path.
+`scripts/spa-routes.mjs` then writes an `index.html` for every route (including each product page) so deep
+links return HTTP 200, plus a `404.html` fallback for anything else.
+
+Live site: https://sathish248907.github.io/artistry/
