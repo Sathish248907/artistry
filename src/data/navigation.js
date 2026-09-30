@@ -99,6 +99,25 @@ export const MEGA_MENU = [
       },
     ],
   },
+  {
+    // External partner link: the nav item and every panel link open growcapital.app in a new tab.
+    id: 'grow-capital',
+    label: 'Grow Capital',
+    external: true,
+    href: 'https://growcapital.app/',
+    panel: {
+      eyebrow: 'Grow Capital',
+      title: 'Grow Your Wealth With Purpose',
+      copy: 'Explore smarter ways to grow and manage your wealth with Grow Capital.',
+      cta: 'Explore Grow Capital',
+      cards: [
+        { icon: 'TrendingUp', title: 'Investment Opportunities', copy: 'Explore opportunities designed to help you build long-term financial growth.' },
+        { icon: 'Sprout', title: 'Wealth Growth', copy: 'Discover strategies and solutions focused on sustainable wealth creation.' },
+        { icon: 'Lightbulb', title: 'Financial Insights', copy: 'Access useful insights and information to help you make informed financial decisions.' },
+        { icon: 'Globe', title: 'Grow Capital', copy: 'Learn more about Grow Capital and explore its platform.' },
+      ],
+    },
+  },
   { id: 'wedding', label: 'Wedding', to: '/wedding' },
   {
     id: 'customize',

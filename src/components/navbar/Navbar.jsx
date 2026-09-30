@@ -57,6 +57,14 @@ export default function Navbar() {
 
   useEffect(() => setActive(null), [location.pathname, location.search]);
 
+  // Escape closes an open menu regardless of where focus is (mouse-opened menus included)
+  useEffect(() => {
+    if (!active) return undefined;
+    const onKey = (e) => e.key === 'Escape' && setActive(null);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [active]);
+
   const enter = (id) => {
     clearTimeout(closeTimer.current);
     setActive(id);
@@ -65,7 +73,27 @@ export default function Navbar() {
     closeTimer.current = setTimeout(() => setActive(null), 140);
   };
 
-  const activeMenu = MEGA_MENU.find((m) => m.id === active && m.columns);
+  const hasMenu = (item) => Boolean(item.columns || item.panel);
+  const activeMenu = MEGA_MENU.find((m) => m.id === active && hasMenu(m));
+
+  // Keyboard users: focusing a nav item opens its menu; tabbing out of the header closes it.
+  const onHeaderBlur = (e) => {
+    if (!e.currentTarget.contains(e.relatedTarget)) setActive(null);
+  };
+
+  const navItemClass = (isActive, id) =>
+    classNames(
+      'group relative flex items-center whitespace-nowrap px-2.5 text-[12px] font-medium uppercase tracking-[0.16em] transition-colors duration-200 2xl:px-4 2xl:tracking-[0.18em]',
+      isActive || active === id ? 'text-rose-deep' : 'text-ink hover:text-rose-deep',
+    );
+  const underline = (id) => (
+    <span
+      className={classNames(
+        'absolute inset-x-2.5 bottom-0 h-[2px] origin-left rounded-full bg-gradient-to-r from-rose to-gold transition-transform duration-300 2xl:inset-x-4',
+        active === id ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100',
+      )}
+    />
+  );
 
   return (
     <header
@@ -74,6 +102,7 @@ export default function Navbar() {
         scrolled ? 'bg-ivory/90 shadow-[0_10px_30px_-18px_rgba(183,110,121,0.45)] backdrop-blur-xl' : 'bg-ivory',
       )}
       onMouseLeave={leave}
+      onBlur={onHeaderBlur}
     >
       <div className={classNames('shell flex items-center justify-between gap-4 transition-all duration-500', scrolled ? 'h-[66px]' : 'h-[84px]')}>
         <div className="flex items-center gap-2">
@@ -85,26 +114,32 @@ export default function Navbar() {
 
         <nav className="hidden h-full items-stretch xl:flex" aria-label="Primary">
           {MEGA_MENU.map((item) => (
-            <div key={item.id} className="relative flex items-stretch" onMouseEnter={() => enter(item.id)}>
-              <NavLink
-                to={item.to}
-                className={({ isActive }) =>
-                  classNames(
-                    'group relative flex items-center whitespace-nowrap px-2.5 text-[12px] font-medium uppercase tracking-[0.16em] transition-colors 2xl:px-4 2xl:tracking-[0.18em]',
-                    isActive || active === item.id ? 'text-rose-deep' : 'text-ink hover:text-rose-deep',
-                  )
-                }
-                aria-expanded={item.columns ? active === item.id : undefined}
-              >
-                {item.label}
-                {item.badge && <span className="ml-1.5 hidden whitespace-nowrap rounded-full bg-rose-blush px-1.5 py-0.5 text-[9px] tracking-[0.08em] text-rose-deep 2xl:inline">{item.badge}</span>}
-                <span
-                  className={classNames(
-                    'absolute inset-x-2.5 bottom-0 h-[2px] origin-left rounded-full bg-gradient-to-r from-rose to-gold transition-transform duration-300 2xl:inset-x-4',
-                    active === item.id ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100',
-                  )}
-                />
-              </NavLink>
+            <div key={item.id} className="relative flex items-stretch" onMouseEnter={() => enter(item.id)} onFocus={() => hasMenu(item) && enter(item.id)}>
+              {item.external ? (
+                <a
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={navItemClass(false, item.id)}
+                  aria-label={`${item.label} (opens the Grow Capital website in a new tab)`}
+                  aria-haspopup={hasMenu(item) ? 'true' : undefined}
+                  aria-expanded={hasMenu(item) ? active === item.id : undefined}
+                >
+                  {item.label}
+                  {underline(item.id)}
+                </a>
+              ) : (
+                <NavLink
+                  to={item.to}
+                  className={({ isActive }) => navItemClass(isActive, item.id)}
+                  aria-haspopup={hasMenu(item) ? 'true' : undefined}
+                  aria-expanded={hasMenu(item) ? active === item.id : undefined}
+                >
+                  {item.label}
+                  {item.badge && <span className="ml-1.5 hidden whitespace-nowrap rounded-full bg-rose-blush px-1.5 py-0.5 text-[9px] tracking-[0.08em] text-rose-deep 2xl:inline">{item.badge}</span>}
+                  {underline(item.id)}
+                </NavLink>
+              )}
             </div>
           ))}
         </nav>

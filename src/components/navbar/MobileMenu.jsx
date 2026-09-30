@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { CalendarHeart, ChevronDown, Heart, MapPin, Phone, User } from 'lucide-react';
+import { ArrowRight, CalendarHeart, ChevronDown, ExternalLink, Heart, MapPin, Phone, User } from 'lucide-react';
 import Modal from '../common/Modal';
 import Logo from '../common/Logo';
+import Icon from '../common/Icon';
 import { MEGA_MENU } from '../../data/navigation';
 import { useUI } from '../../context/UIContext';
 import { BRAND } from '../../data/brand';
@@ -22,11 +23,34 @@ export default function MobileMenu() {
         </div>
         <nav className="flex-1 overflow-y-auto px-5 py-3" aria-label="Mobile">
           {MEGA_MENU.map((item) => {
-            const expandable = Boolean(item.columns);
+            const expandable = Boolean(item.columns || item.panel);
             const isOpen = open === item.id;
             return (
               <div key={item.id} className="border-b border-rose-light/40">
-                {expandable ? (
+                {item.external ? (
+                  // Label opens the external site; the chevron toggles the info panel
+                  <div className="flex items-center justify-between">
+                    <a
+                      href={item.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex flex-1 items-center gap-2 py-4"
+                      aria-label={`${item.label} (opens the Grow Capital website in a new tab)`}
+                    >
+                      <span className="font-display text-2xl text-ink">{item.label}</span>
+                      <ExternalLink size={15} className="text-ink-faint" />
+                    </a>
+                    <button
+                      onClick={() => setOpen(isOpen ? null : item.id)}
+                      className="flex h-12 w-12 items-center justify-center rounded-full"
+                      aria-expanded={isOpen}
+                      aria-haspopup="true"
+                      aria-label={`${isOpen ? 'Hide' : 'Show'} ${item.label} details`}
+                    >
+                      <ChevronDown size={18} className={classNames('text-rose transition-transform duration-300', isOpen && 'rotate-180')} />
+                    </button>
+                  </div>
+                ) : expandable ? (
                   <button onClick={() => setOpen(isOpen ? null : item.id)} className="flex w-full items-center justify-between py-4 text-left" aria-expanded={isOpen}>
                     <span className="font-display text-2xl text-ink">{item.label}</span>
                     <ChevronDown size={18} className={classNames('text-rose transition-transform duration-300', isOpen && 'rotate-180')} />
@@ -40,6 +64,28 @@ export default function MobileMenu() {
                 <AnimatePresence initial={false}>
                   {expandable && isOpen && (
                     <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.3 }} className="overflow-hidden">
+                      {item.panel ? (
+                        <div className="pb-5">
+                          <p className="font-display text-xl text-ink">{item.panel.title}</p>
+                          <p className="mt-1 text-sm text-ink-soft">{item.panel.copy}</p>
+                          <ul className="mt-4 space-y-2">
+                            {item.panel.cards.map((c) => (
+                              <li key={c.title}>
+                                <a href={item.href} target="_blank" rel="noopener noreferrer" className="flex items-start gap-3 rounded-xl border border-rose-light/60 bg-ivory px-4 py-3" aria-label={`${c.title} (opens in a new tab)`}>
+                                  <span className="mt-0.5 text-rose"><Icon name={c.icon} size={16} strokeWidth={1.6} /></span>
+                                  <span>
+                                    <span className="block text-sm font-medium text-ink">{c.title}</span>
+                                    <span className="block text-xs leading-relaxed text-ink-soft">{c.copy}</span>
+                                  </span>
+                                </a>
+                              </li>
+                            ))}
+                          </ul>
+                          <a href={item.href} target="_blank" rel="noopener noreferrer" className="btn-primary mt-4 w-full" aria-label={`${item.panel.cta} (opens the Grow Capital website in a new tab)`}>
+                            {item.panel.cta} <ArrowRight size={15} />
+                          </a>
+                        </div>
+                      ) : (
                       <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 pb-5">
                         {item.columns.flatMap((c) => c.links).map(([label, to]) => (
                           <Link key={label} to={to} onClick={close} className="text-sm text-ink-soft hover:text-rose-deep">
@@ -47,6 +93,7 @@ export default function MobileMenu() {
                           </Link>
                         ))}
                       </div>
+                      )}
                     </motion.div>
                   )}
                 </AnimatePresence>
