@@ -31,12 +31,20 @@ export function Stepper({ step }) {
 }
 
 export function LoginStep({ onDone }) {
-  const { user, requestOtp, verifyOtp } = useAuth();
+  const { user, requestOtp, verifyOtp, otpLive } = useAuth();
   const [mobile, setMobile] = useState('');
   const [otp, setOtp] = useState('');
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
+  const [cooldown, setCooldown] = useState(0);
+
+  // Resend countdown after an SMS goes out
+  useEffect(() => {
+    if (!cooldown) return undefined;
+    const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [cooldown]);
 
   if (user) {
     return (
@@ -44,7 +52,7 @@ export function LoginStep({ onDone }) {
         <div>
           <p className="text-sm text-ink-soft">Signed in as</p>
           <p className="font-display text-2xl">{user.name}</p>
-          <p className="text-xs text-ink-faint">{user.mobile}</p>
+          <p className="text-xs text-ink-faint">{user.mobile}{user.verified && ' · verified'}</p>
         </div>
         <button onClick={onDone} className="btn-primary">Continue</button>
       </div>
@@ -52,39 +60,62 @@ export function LoginStep({ onDone }) {
   }
 
   const send = async (e) => {
-    e.preventDefault();
+    e?.preventDefault();
     if (!/^[6-9]\d{9}$/.test(mobile)) return setErr('Enter a valid 10-digit mobile number');
     setErr('');
     setBusy(true);
-    await requestOtp(mobile);
-    setBusy(false);
-    setSent(true);
+    try {
+      await requestOtp(mobile);
+      setSent(true);
+      setOtp('');
+      setCooldown(30);
+    } catch (ex) {
+      setErr(ex.message);
+    } finally {
+      setBusy(false);
+    }
   };
   const verify = async (e) => {
     e.preventDefault();
     if (!/^\d{6}$/.test(otp)) return setErr('Enter the 6-digit OTP');
+    setErr('');
     setBusy(true);
-    await verifyOtp(`+91 ${mobile}`, otp);
-    setBusy(false);
-    onDone();
+    try {
+      await verifyOtp(mobile, otp);
+      onDone();
+    } catch (ex) {
+      setErr(ex.message);
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
-    <form onSubmit={sent ? verify : send} className="max-w-md">
+    <form onSubmit={sent ? verify : send} className="max-w-md" aria-busy={busy}>
       <p className="text-sm text-ink-soft">Sign in with your mobile to track orders and earn Golden Circle points.</p>
       <label className="label mt-5" htmlFor="co-mobile">Mobile number</label>
       <div className="flex gap-2">
         <span className="flex items-center rounded-xl border border-rose-light/70 bg-cream px-3 text-sm text-ink-soft">+91</span>
-        <input id="co-mobile" value={mobile} disabled={sent} onChange={(e) => setMobile(e.target.value.replace(/\D/g, '').slice(0, 10))} inputMode="tel" className="input" placeholder="98XXXXXXXX" />
+        <input id="co-mobile" value={mobile} disabled={sent} onChange={(e) => setMobile(e.target.value.replace(/\D/g, '').slice(0, 10))} inputMode="tel" autoComplete="tel-national" className="input" placeholder="98XXXXXXXX" />
       </div>
       {sent && (
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-          <label className="label mt-4" htmlFor="co-otp">OTP sent to +91 {mobile}</label>
-          <input id="co-otp" value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" className="input tracking-[0.6em]" placeholder="••••••" />
-          <p className="mt-1 text-[11px] text-ink-faint">Demo: any 6 digits work.</p>
+          <label className="label mt-4" htmlFor="co-otp">Enter the OTP sent to +91 {mobile}</label>
+          <input id="co-otp" value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" autoFocus className="input tracking-[0.6em]" placeholder="••••••" />
+          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-ink-faint">
+            {otpLive ? <span>SMS sent — it can take up to a minute to arrive.</span> : <span>Demo mode: any 6 digits work.</span>}
+            <button type="button" onClick={send} disabled={busy || cooldown > 0} className="text-rose-deep underline-offset-2 hover:underline disabled:no-underline disabled:opacity-60">
+              {cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend OTP'}
+            </button>
+            <button type="button" onClick={() => { setSent(false); setOtp(''); setErr(''); }} className="text-rose-deep underline-offset-2 hover:underline">
+              Change number
+            </button>
+          </div>
         </motion.div>
       )}
-      {err && <p className="mt-2 text-xs text-rose-deep">{err}</p>}
+      {err && <p className="mt-2 text-xs text-rose-deep" role="alert">{err}</p>}
+      {/* Invisible reCAPTCHA anchor for Firebase Phone Auth */}
+      <div id="otp-recaptcha" />
       <button disabled={busy} className="btn-primary mt-5">
         {busy && <Loader2 size={15} className="animate-spin" />} {sent ? 'Verify & Continue' : 'Send OTP'}
       </button>

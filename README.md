@@ -65,3 +65,20 @@ The build runs with `VITE_BASE=/<repo-name>/` so assets and routes resolve under
 links return HTTP 200, plus a `404.html` fallback for anything else.
 
 Live site: https://sathish248907.github.io/artistry/
+
+## Real SMS OTP (Firebase Phone Authentication)
+
+Checkout and account sign-in send a real OTP by SMS when Firebase is configured; otherwise they run in
+demo mode (any 6-digit code). Setup:
+
+1. In the [Firebase console](https://console.firebase.google.com/) create a project → **Build → Authentication →
+   Sign-in method → Phone → Enable**.
+2. **Authentication → Settings → Authorized domains** → add `sathish248907.github.io` (and `localhost` for dev).
+3. **Project settings → Your apps → Web app** → copy `apiKey`, `authDomain`, `projectId`, `appId`.
+4. Put them in a local `.env` (see `.env.example`) for development, and as GitHub **repository variables**
+   (`Settings → Secrets and variables → Actions → Variables`) named `VITE_FIREBASE_API_KEY`,
+   `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_APP_ID` for the live site.
+   The next push (or a manual run of the Deploy workflow) makes OTPs live.
+
+Firebase's web config is safe to expose in the browser; an invisible reCAPTCHA protects the SMS endpoint.
+`src/services/otp.js` wraps the flow and is loaded only on the checkout/account pages.
