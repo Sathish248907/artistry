@@ -25,11 +25,17 @@ const MESSAGES = {
   'auth/captcha-check-failed': 'Verification check failed. Please refresh and try again.',
   'auth/unauthorized-domain': 'This website isn’t authorised for OTP yet. Add it under Firebase → Authentication → Settings → Authorized domains.',
   'auth/network-request-failed': 'Network problem while sending the code. Check your connection and retry.',
+  'auth/operation-not-allowed': 'Phone sign-in is switched off for this site. Enable it in Firebase → Authentication → Sign-in method → Phone.',
+  'auth/billing-not-enabled': 'SMS sending needs billing enabled on the Firebase project (Blaze plan).',
+  'auth/app-not-authorized': 'This app isn’t authorised to use Firebase Authentication. Check the Firebase web app configuration.',
+  'auth/invalid-app-credential': 'The security check couldn’t be completed. Refresh the page and try again.',
+  'auth/missing-phone-number': 'Please enter your mobile number.',
 };
 
 export class OtpError extends Error {
   constructor(code, message) {
-    super(message || MESSAGES[code] || 'Something went wrong. Please try again.');
+    // Unknown codes are surfaced so support can act on them (e.g. auth/xyz-unknown)
+    super(message || MESSAGES[code] || `Something went wrong. Please try again.${code ? ` (${code})` : ''}`);
     this.code = code;
   }
 }
