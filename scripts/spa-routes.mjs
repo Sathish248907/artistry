@@ -5,7 +5,7 @@ import { join } from 'node:path';
 
 const STATIC_ROUTES = [
   'products', 'gold-coins', 'customize', 'collections', 'wedding', 'gifts', 'gold-rates',
-  'cart', 'checkout', 'wishlist', 'account', 'stores', 'appointment',
+  'cart', 'checkout', 'wishlist', 'account', 'stores', 'appointment', 'grow-capital',
 ];
 
 // Product slugs mirror slugify() in src/utils/format.js, applied to product names in src/data/products.js

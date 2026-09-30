@@ -18,6 +18,7 @@ const Wishlist = lazy(() => import('../pages/Wishlist'));
 const Account = lazy(() => import('../pages/Account'));
 const StoreLocator = lazy(() => import('../pages/StoreLocator'));
 const Appointment = lazy(() => import('../pages/Appointment'));
+const GrowCapital = lazy(() => import('../pages/GrowCapital'));
 const NotFound = lazy(() => import('../pages/NotFound'));
 
 export default function AppRoutes() {
@@ -39,6 +40,7 @@ export default function AppRoutes() {
         <Route path="account" element={<Account />} />
         <Route path="stores" element={<StoreLocator />} />
         <Route path="appointment" element={<Appointment />} />
+        <Route path="grow-capital" element={<GrowCapital />} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

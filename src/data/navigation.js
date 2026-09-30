@@ -100,10 +100,10 @@ export const MEGA_MENU = [
     ],
   },
   {
-    // External partner link: the nav item and every panel link open growcapital.app in a new tab.
+    // Partner platform: nav item + cards open the in-site page; CTAs open growcapital.app in a new tab.
     id: 'grow-capital',
     label: 'Grow Capital',
-    external: true,
+    to: '/grow-capital',
     href: 'https://growcapital.app/',
     panel: {
       eyebrow: 'Grow Capital',
@@ -215,6 +215,7 @@ export const FOOTER_COLUMNS = [
       ['Stores', '/stores'],
       ['Careers', '/account?tab=support'],
       ['Sustainability', '/collections'],
+      ['Grow Capital', '/grow-capital'],
     ],
   },
 ];

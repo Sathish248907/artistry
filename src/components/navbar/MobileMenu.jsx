@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowRight, CalendarHeart, ChevronDown, ExternalLink, Heart, MapPin, Phone, User } from 'lucide-react';
+import { ArrowRight, CalendarHeart, ChevronDown, Heart, MapPin, Phone, User } from 'lucide-react';
 import Modal from '../common/Modal';
 import Logo from '../common/Logo';
 import Icon from '../common/Icon';
@@ -27,19 +27,12 @@ export default function MobileMenu() {
             const isOpen = open === item.id;
             return (
               <div key={item.id} className="border-b border-rose-light/40">
-                {item.external ? (
-                  // Label opens the external site; the chevron toggles the info panel
+                {item.panel ? (
+                  // Label opens the in-site page; the chevron toggles the info panel
                   <div className="flex items-center justify-between">
-                    <a
-                      href={item.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex flex-1 items-center gap-2 py-4"
-                      aria-label={`${item.label} (opens the Grow Capital website in a new tab)`}
-                    >
+                    <Link to={item.to} onClick={close} className="flex flex-1 items-center gap-2 py-4">
                       <span className="font-display text-2xl text-ink">{item.label}</span>
-                      <ExternalLink size={15} className="text-ink-faint" />
-                    </a>
+                    </Link>
                     <button
                       onClick={() => setOpen(isOpen ? null : item.id)}
                       className="flex h-12 w-12 items-center justify-center rounded-full"
@@ -71,13 +64,13 @@ export default function MobileMenu() {
                           <ul className="mt-4 space-y-2">
                             {item.panel.cards.map((c) => (
                               <li key={c.title}>
-                                <a href={item.href} target="_blank" rel="noopener noreferrer" className="flex items-start gap-3 rounded-xl border border-rose-light/60 bg-ivory px-4 py-3" aria-label={`${c.title} (opens in a new tab)`}>
+                                <Link to={item.to} onClick={close} className="flex items-start gap-3 rounded-xl border border-rose-light/60 bg-ivory px-4 py-3">
                                   <span className="mt-0.5 text-rose"><Icon name={c.icon} size={16} strokeWidth={1.6} /></span>
                                   <span>
                                     <span className="block text-sm font-medium text-ink">{c.title}</span>
                                     <span className="block text-xs leading-relaxed text-ink-soft">{c.copy}</span>
                                   </span>
-                                </a>
+                                </Link>
                               </li>
                             ))}
                           </ul>

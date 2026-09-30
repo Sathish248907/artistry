@@ -7,9 +7,9 @@ import { EASE } from '../common/Reveal';
 import { GOLD_RATES } from '../../data/goldRates';
 import { formatNumber } from '../../utils/format';
 
-/** External partner panel (Grow Capital): intro + CTA on the left, information cards on the right. */
+/** Partner panel (Grow Capital): intro + external CTA on the left; cards open the in-site page. */
 function ExternalPanel({ menu }) {
-  const { panel, href, label } = menu;
+  const { panel, href, label, to } = menu;
   const linkProps = { href, target: '_blank', rel: 'noopener noreferrer' };
   return (
     <div className="shell grid grid-cols-12 gap-10 py-10">
@@ -21,16 +21,16 @@ function ExternalPanel({ menu }) {
           {panel.cta} <ArrowRight size={15} className="transition-transform duration-300 group-hover:translate-x-1" />
         </a>
         <p className="mt-3 flex items-center gap-1.5 text-[11px] text-ink-faint">
-          <ExternalLink size={12} /> Opens growcapital.app in a new tab
+          <ExternalLink size={12} /> Opens growcapital.app in a new tab · <Link to={to} className="text-rose-deep hover:underline">About Grow Capital</Link>
         </p>
       </motion.div>
       <ul className="col-span-8 grid grid-cols-2 gap-4" aria-label={`${label} highlights`}>
         {panel.cards.map((c, i) => (
           <motion.li key={c.title} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 * i, duration: 0.35, ease: EASE }}>
-            <a
-              {...linkProps}
+            <Link
+              to={to}
               className="group flex h-full gap-4 rounded-2xl border border-rose-light/60 bg-ivory p-5 transition-all duration-300 hover:-translate-y-1 hover:border-rose hover:shadow-rose-lg"
-              aria-label={`${c.title} — ${label} (opens in a new tab)`}
+              aria-label={`${c.title} — learn more on the ${label} page`}
             >
               <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-rose-blush text-rose transition-colors duration-300 group-hover:bg-rose group-hover:text-white">
                 <Icon name={c.icon} size={19} strokeWidth={1.6} />
@@ -38,11 +38,11 @@ function ExternalPanel({ menu }) {
               <span className="min-w-0">
                 <span className="flex items-center gap-2 font-display text-xl text-ink transition-colors duration-300 group-hover:text-rose-deep">
                   {c.title}
-                  <ExternalLink size={13} className="text-ink-faint opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                  <ArrowRight size={13} className="text-rose opacity-0 transition-all duration-300 group-hover:translate-x-1 group-hover:opacity-100" />
                 </span>
                 <span className="mt-1 block text-sm leading-relaxed text-ink-soft">{c.copy}</span>
               </span>
-            </a>
+            </Link>
           </motion.li>
         ))}
       </ul>
