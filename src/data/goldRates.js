@@ -9,7 +9,12 @@ const history = Array.from({ length: 30 }, (_, i) => {
   d.setDate(d.getDate() - (29 - i));
   return { date: d.toISOString().slice(0, 10), rate24: Math.round(base24 + wave + drift) };
 });
-history[29].rate24 = base24;
+// Intraday movement (deterministic per hour, within ±0.35%) so the live board — and every product
+// price built on it — moves through the day the way a real rate does. Price-drop alerts key off this.
+const hourSeed = Math.floor(Date.now() / 3600000);
+const intraday = Math.sin(hourSeed * 12.9898) * 0.0035;
+const live24 = Math.round((base24 * (1 + intraday)) / 10) * 10;
+history[29].rate24 = live24;
 
 const yesterday24 = history[28].rate24;
 
@@ -19,9 +24,9 @@ export const GOLD_RATES = {
   city: 'Mumbai',
   updatedAt: new Date(new Date().setHours(9, 45, 0, 0)).toISOString(),
   rates: {
-    '24K': { label: '24K Gold', fineness: '999', per10g: base24, prev: yesterday24 },
-    '22K': { label: '22K Gold', fineness: '916', per10g: toPurity(base24, 0.916), prev: toPurity(yesterday24, 0.916) },
-    '18K': { label: '18K Gold', fineness: '750', per10g: toPurity(base24, 0.75), prev: toPurity(yesterday24, 0.75) },
+    '24K': { label: '24K Gold', fineness: '999', per10g: live24, prev: yesterday24 },
+    '22K': { label: '22K Gold', fineness: '916', per10g: toPurity(live24, 0.916), prev: toPurity(yesterday24, 0.916) },
+    '18K': { label: '18K Gold', fineness: '750', per10g: toPurity(live24, 0.75), prev: toPurity(yesterday24, 0.75) },
   },
   history,
 };

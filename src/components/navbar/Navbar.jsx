@@ -9,7 +9,7 @@ import { useUI } from '../../context/UIContext';
 import { useShop } from '../../context/ShopContext';
 import useScrolled from '../../hooks/useScrolled';
 import { classNames } from '../../utils/format';
-import { NOTIFICATIONS } from '../../data/content';
+import { useNotifications } from '../../context/NotificationsContext';
 
 function IconButton({ label, onClick, to, children, badge, className }) {
   const inner = (
@@ -53,7 +53,7 @@ export default function Navbar() {
   const [active, setActive] = useState(null);
   const closeTimer = useRef();
   const location = useLocation();
-  const unread = NOTIFICATIONS.filter((n) => !n.read).length;
+  const { unread } = useNotifications();
 
   useEffect(() => setActive(null), [location.pathname, location.search]);
 

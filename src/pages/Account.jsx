@@ -5,11 +5,14 @@ import { Bell, Calendar, ChevronRight, Coins, Heart, HelpCircle, LogOut, MapPin,
 import SmartImage from '../components/common/SmartImage';
 import { LoginStep } from '../components/checkout/CheckoutSteps';
 import { NotificationList, NOTIFICATION_META } from '../components/navbar/NotificationPanel';
+import CoinArt from '../components/goldCoins/CoinArt';
+import { canUseBrowserNotifications, useNotifications } from '../context/NotificationsContext';
+import { productPrice } from '../utils/pricing';
 import { useAuth } from '../context/AuthContext';
 import { useShop } from '../context/ShopContext';
 import { useUI } from '../context/UIContext';
 import { customDesignService, customerService, orderService } from '../services';
-import { NOTIFICATIONS, STORES } from '../data/content';
+import { STORES } from '../data/content';
 import { findItem } from '../data/products';
 import useLocalStorage from '../hooks/useLocalStorage';
 import { classNames, formatDate, formatINR } from '../utils/format';
@@ -211,23 +214,88 @@ function Searches() {
 }
 
 function Notifications() {
-  const [prefs, setPrefs] = useLocalStorage('ph.notifPrefs', Object.fromEntries(Object.keys(NOTIFICATION_META).map((k) => [k, true])));
+  const { items, prefs, setPrefs, markAllRead, clearAll, requestBrowserPermission } = useNotifications();
+  const { priceAlerts, alertMeta, togglePriceAlert } = useShop();
+  const [perm, setPerm] = useState(canUseBrowserNotifications() ? Notification.permission : 'unsupported');
+  const alerts = priceAlerts.map((id) => ({ id, item: findItem(id), meta: alertMeta[id] })).filter((a) => a.item);
+
   return (
-    <Panel title="Notifications">
-      <div className="grid gap-8 xl:grid-cols-[1fr_320px]">
-        <NotificationList items={NOTIFICATIONS} />
-        <div className="rounded-3xl border border-rose-light/60 bg-ivory p-6">
-          <p className="label">Notify me about</p>
-          <ul className="mt-2 space-y-3">
-            {Object.entries(NOTIFICATION_META).map(([k, m]) => (
-              <li key={k} className="flex items-center justify-between text-sm">
-                <span className="text-ink-soft">{m.label}</span>
-                <button role="switch" aria-checked={prefs[k]} aria-label={m.label} onClick={() => setPrefs((p) => ({ ...p, [k]: !p[k] }))} className={classNames('relative h-6 w-11 rounded-full transition', prefs[k] ? 'bg-rose' : 'bg-rose-light/60')}>
-                  <motion.span layout className={classNames('absolute top-0.5 h-5 w-5 rounded-full bg-ivory shadow', prefs[k] ? 'right-0.5' : 'left-0.5')} />
-                </button>
-              </li>
-            ))}
-          </ul>
+    <Panel
+      title="Notifications"
+      action={
+        items.length > 0 && (
+          <div className="flex gap-3 text-[11px] uppercase tracking-[0.16em]">
+            <button onClick={markAllRead} className="text-rose-deep hover:underline">Mark all read</button>
+            <button onClick={clearAll} className="text-ink-faint hover:text-rose-deep">Clear</button>
+          </div>
+        )
+      }
+    >
+      <div className="grid gap-8 xl:grid-cols-[1fr_340px]">
+        <div className="space-y-8">
+          <NotificationList items={items} />
+
+          <div>
+            <p className="label">Your price alerts ({alerts.length})</p>
+            {alerts.length === 0 ? (
+              <p className="rounded-2xl border border-dashed border-rose-light p-6 text-sm text-ink-soft">
+                No alerts yet. Open any piece and tap <strong className="font-medium text-ink">Notify on price drop</strong> — we’ll message you here (and in your browser) when its price falls.
+              </p>
+            ) : (
+              <ul className="space-y-2">
+                {alerts.map(({ id, item, meta }) => {
+                  const current = productPrice(item);
+                  const saved = meta?.price ?? current;
+                  const diff = saved - current;
+                  return (
+                    <li key={id} className="flex items-center gap-4 rounded-2xl border border-rose-light/60 bg-ivory p-3">
+                      {item.isCoin ? (
+                        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-rose-blush"><CoinArt motif={item.coin.motif} size={40} /></span>
+                      ) : (
+                        <SmartImage name={item.image} width={200} sizes="56px" className="h-14 w-14 shrink-0 rounded-xl" />
+                      )}
+                      <span className="min-w-0 flex-1">
+                        <Link to={item.isCoin ? '/gold-coins' : `/product/${item.slug}`} className="block truncate font-display text-lg text-ink hover:text-rose-deep">{item.name}</Link>
+                        <span className="block text-xs text-ink-soft">
+                          Alert set at {formatINR(saved)} · now <strong className={classNames('font-medium', diff > 0 ? 'text-rose-deep' : 'text-ink')}>{formatINR(current)}</strong>
+                          {diff > 0 ? ` · down ${formatINR(diff)}` : diff < 0 ? ` · up ${formatINR(-diff)}` : ' · unchanged'}
+                        </span>
+                      </span>
+                      <button onClick={() => togglePriceAlert(id)} className="chip shrink-0 !px-3 !py-1.5 !text-[10px] uppercase tracking-[0.14em]">Remove</button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div className="rounded-3xl border border-rose-light/60 bg-ivory p-6">
+            <p className="label">Notify me about</p>
+            <ul className="mt-2 space-y-3">
+              {Object.entries(NOTIFICATION_META).map(([k, m]) => (
+                <li key={k} className="flex items-center justify-between text-sm">
+                  <span className="text-ink-soft">{m.label}</span>
+                  <button role="switch" aria-checked={prefs[k] !== false} aria-label={m.label} onClick={() => setPrefs((p) => ({ ...p, [k]: p[k] === false }))} className={classNames('relative h-6 w-11 rounded-full transition', prefs[k] !== false ? 'bg-rose' : 'bg-rose-light/60')}>
+                    <motion.span layout className={classNames('absolute top-0.5 h-5 w-5 rounded-full bg-ivory shadow', prefs[k] !== false ? 'right-0.5' : 'left-0.5')} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="rounded-3xl border border-rose-light/60 bg-ivory p-6">
+            <p className="label">Browser notifications</p>
+            {perm === 'granted' && <p className="text-sm text-ink-soft">On — price drops also pop up on this device even when you’re on another tab.</p>}
+            {perm === 'denied' && <p className="text-sm text-ink-soft">Blocked in your browser. Allow notifications for this site in the address-bar settings to turn them on.</p>}
+            {perm === 'unsupported' && <p className="text-sm text-ink-soft">Not supported by this browser. You’ll still get alerts in the bell menu.</p>}
+            {perm === 'default' && (
+              <>
+                <p className="text-sm text-ink-soft">Get a pop-up on this device when a watched piece drops in price.</p>
+                <button onClick={async () => setPerm(await requestBrowserPermission())} className="btn-outline mt-4 !py-2.5 !text-[11px]">Enable browser alerts</button>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </Panel>
