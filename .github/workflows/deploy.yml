@@ -32,6 +32,8 @@ jobs:
           VITE_FIREBASE_AUTH_DOMAIN: ${{ vars.VITE_FIREBASE_AUTH_DOMAIN }}
           VITE_FIREBASE_PROJECT_ID: ${{ vars.VITE_FIREBASE_PROJECT_ID }}
           VITE_FIREBASE_APP_ID: ${{ vars.VITE_FIREBASE_APP_ID }}
+          # Address of the deployed backend /api; empty = storefront only, no admin area
+          VITE_BACKEND_URL: ${{ vars.VITE_BACKEND_URL }}
       # Real index.html per route (HTTP 200 for deep links) + 404.html fallback for anything else
       - run: node scripts/spa-routes.mjs
       - uses: actions/upload-pages-artifact@v3

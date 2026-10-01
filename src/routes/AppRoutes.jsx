@@ -1,6 +1,7 @@
-import { lazy } from 'react';
+import { Suspense, lazy } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import Layout from '../components/layout/Layout';
+import Loader from '../components/common/Loader';
 import Home from '../pages/Home';
 
 // Home is eager for first paint; everything else is code-split per route.
@@ -21,9 +22,41 @@ const Appointment = lazy(() => import('../pages/Appointment'));
 const GrowCapital = lazy(() => import('../pages/GrowCapital'));
 const NotFound = lazy(() => import('../pages/NotFound'));
 
+// Admin area (inventory and gold rates). It has its own frame and is only downloaded when someone opens /admin.
+const AdminLayout = lazy(() => import('../admin/AdminLayout'));
+const AdminDashboard = lazy(() => import('../admin/pages/Dashboard'));
+const AdminInventory = lazy(() => import('../admin/pages/InventoryList'));
+const AdminStock = lazy(() => import('../admin/pages/StockAdjustment'));
+const AdminHistory = lazy(() => import('../admin/pages/InventoryHistory'));
+const AdminLowStock = lazy(() => import('../admin/pages/LowStock'));
+const AdminGoldRates = lazy(() => import('../admin/pages/GoldRates'));
+const AdminGoldRateHistory = lazy(() => import('../admin/pages/GoldRateHistory'));
+const AdminCharges = lazy(() => import('../admin/pages/Charges'));
+const AdminCalculator = lazy(() => import('../admin/pages/PriceCalculator'));
+
 export default function AppRoutes() {
   return (
     <Routes>
+      <Route
+        path="admin"
+        element={
+          <Suspense fallback={<Loader full />}>
+            <AdminLayout />
+          </Suspense>
+        }
+      >
+        <Route index element={<AdminDashboard />} />
+        <Route path="inventory" element={<AdminInventory />} />
+        <Route path="stock" element={<AdminStock />} />
+        <Route path="history" element={<AdminHistory />} />
+        <Route path="low-stock" element={<AdminLowStock />} />
+        <Route path="gold-rates" element={<AdminGoldRates />} />
+        <Route path="gold-rate-history" element={<AdminGoldRateHistory />} />
+        <Route path="charges" element={<AdminCharges />} />
+        <Route path="calculator" element={<AdminCalculator />} />
+        <Route path="*" element={<AdminDashboard />} />
+      </Route>
+
       <Route element={<Layout />}>
         <Route index element={<Home />} />
         <Route path="products" element={<Products />} />
