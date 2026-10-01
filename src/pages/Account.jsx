@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Bell, Calendar, ChevronRight, Coins, Heart, HelpCircle, LogOut, MapPin, Package, PenTool, Search, User } from 'lucide-react';
 import SmartImage from '../components/common/SmartImage';
 import { LoginStep } from '../components/checkout/CheckoutSteps';
+import ProfileDetailsForm from '../components/account/ProfileDetailsForm';
 import { NotificationList, NOTIFICATION_META } from '../components/navbar/NotificationPanel';
 import CoinArt from '../components/goldCoins/CoinArt';
 import { canUseBrowserNotifications, useNotifications } from '../context/NotificationsContext';
@@ -46,26 +47,51 @@ function Panel({ title, children, action }) {
 }
 
 function Profile({ user }) {
+  const { toast } = useUI();
   const [p, setP] = useState(null);
+  const [editing, setEditing] = useState(false);
   useEffect(() => {
     customerService.profile().then(setP);
   }, []);
   if (!p) return <div className="h-40 animate-pulse rounded-3xl bg-rose-blush/50" />;
   return (
-    <Panel title="My Profile">
-      <div className="grid gap-4 sm:grid-cols-2">
-        {[
-          ['Name', user?.name || p.name],
-          ['Mobile', user?.mobile || p.mobile],
-          ['Email', user?.email || p.email],
-          ['City', p.city],
-        ].map(([k, v]) => (
-          <div key={k} className="rounded-2xl border border-rose-light/60 bg-ivory p-5">
-            <p className="text-[10px] uppercase tracking-[0.16em] text-ink-faint">{k}</p>
-            <p className="mt-1 text-ink">{v}</p>
-          </div>
-        ))}
-      </div>
+    <Panel
+      title="My Profile"
+      action={
+        !editing && (
+          <button onClick={() => setEditing(true)} className="text-[11px] uppercase tracking-[0.18em] text-rose-deep hover:underline">
+            Edit name &amp; city
+          </button>
+        )
+      }
+    >
+      {editing ? (
+        <div className="rounded-2xl border border-rose-light/60 bg-ivory p-5">
+          <ProfileDetailsForm
+            intro={false}
+            submitLabel="Save changes"
+            onCancel={() => setEditing(false)}
+            onDone={() => {
+              setEditing(false);
+              toast({ title: 'Profile updated', body: 'Your name and city have been saved.' });
+            }}
+          />
+        </div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2">
+          {[
+            ['Name', user.name],
+            ['Mobile', user.mobile],
+            ['City', user.city],
+            ['Email', user.email || 'Not added'],
+          ].map(([k, v]) => (
+            <div key={k} className="rounded-2xl border border-rose-light/60 bg-ivory p-5">
+              <p className="text-[10px] uppercase tracking-[0.16em] text-ink-faint">{k}</p>
+              <p className="mt-1 text-ink">{v}</p>
+            </div>
+          ))}
+        </div>
+      )}
       <div className="mt-6 flex flex-wrap items-center gap-4 rounded-3xl border border-rose-light bg-ivory p-6">
         <div className="flex-1">
           <p className="text-[11px] uppercase tracking-luxe text-rose-deep">{p.tier} member</p>
@@ -382,7 +408,7 @@ function Support() {
 const PANELS = { profile: Profile, orders: Orders, wishlist: WishlistTab, addresses: Addresses, appointments: Appointments, searches: Searches, notifications: Notifications, savings: Savings, designs: Designs, support: Support };
 
 export default function Account() {
-  const { user, logout } = useAuth();
+  const { user, profileComplete, logout } = useAuth();
   const { toast } = useUI();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
@@ -402,17 +428,17 @@ export default function Account() {
         <div className="absolute inset-0 bg-gradient-to-r from-ivory/95 via-ivory/60 to-transparent" />
         <div className="shell relative flex h-full flex-col justify-center">
           <p className="eyebrow">My account</p>
-          <h1 className="mt-2 font-display text-4xl sm:text-5xl">{user ? `Namaste, ${user.name.split(' ')[0]}` : 'Welcome back'}</h1>
+          <h1 className="mt-2 font-display text-4xl sm:text-5xl">{profileComplete ? `Namaste, ${user.name.split(' ')[0]}` : user ? 'Almost there' : 'Welcome back'}</h1>
         </div>
       </section>
 
       <section className="w-full bg-gradient-to-b from-cream to-ivory pb-24 pt-10">
         <div className="shell">
-          {!user ? (
+          {!profileComplete ? (
             <div className="mx-auto max-w-lg rounded-[28px] border border-rose-light/60 bg-ivory p-8 shadow-soft">
-              <h2 className="font-display text-3xl">Sign in to your account</h2>
+              <h2 className="font-display text-3xl">{user ? 'Complete your profile' : 'Sign in to your account'}</h2>
               <div className="mt-4">
-                <LoginStep onDone={() => toast({ title: 'Signed in', body: 'Welcome to your Golden Circle dashboard.' })} />
+                <LoginStep onDone={(u) => toast({ title: 'Signed in', body: u?.name ? `Welcome, ${u.name.split(' ')[0]}.` : 'Welcome to your Golden Circle dashboard.' })} />
               </div>
             </div>
           ) : (

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Building2, Check, CreditCard, Home, Loader2, MapPin, Plus, Smartphone, Store, Truck, Wallet, Zap } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { isProfileComplete, useAuth } from '../../context/AuthContext';
+import ProfileDetailsForm from '../account/ProfileDetailsForm';
 import { customerService } from '../../services';
 import { STORES } from '../../data/content';
 import { addBusinessDays, classNames, formatDate, formatINR } from '../../utils/format';
@@ -31,7 +32,7 @@ export function Stepper({ step }) {
 }
 
 export function LoginStep({ onDone }) {
-  const { user, requestOtp, verifyOtp, otpLive } = useAuth();
+  const { user, profileComplete, requestOtp, verifyOtp, otpLive } = useAuth();
   const [mobile, setMobile] = useState('');
   const [otp, setOtp] = useState('');
   const [sent, setSent] = useState(false);
@@ -46,13 +47,16 @@ export function LoginStep({ onDone }) {
     return () => clearTimeout(t);
   }, [cooldown]);
 
+  // Mobile verified but name & city not given yet → ask for them before continuing
+  if (user && !profileComplete) return <ProfileDetailsForm onDone={onDone} />;
+
   if (user) {
     return (
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-rose-light/60 bg-rose-blush/40 p-5">
         <div>
           <p className="text-sm text-ink-soft">Signed in as</p>
           <p className="font-display text-2xl">{user.name}</p>
-          <p className="text-xs text-ink-faint">{user.mobile}{user.verified && ' · verified'}</p>
+          <p className="text-xs text-ink-faint">{user.mobile}{user.verified && ' · verified'} · {user.city}</p>
         </div>
         <button onClick={onDone} className="btn-primary">Continue</button>
       </div>
@@ -81,8 +85,9 @@ export function LoginStep({ onDone }) {
     setErr('');
     setBusy(true);
     try {
-      await verifyOtp(mobile, otp);
-      onDone();
+      const signedIn = await verifyOtp(mobile, otp);
+      // New customers see the name & city form next; returning ones go straight on
+      if (isProfileComplete(signedIn)) onDone();
     } catch (ex) {
       setErr(ex.message);
     } finally {
