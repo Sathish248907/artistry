@@ -6,15 +6,17 @@ const CITIES = ['Mumbai', 'Delhi', 'Bengaluru', 'Chennai', 'Hyderabad', 'Kolkata
 
 const NAME_OK = /^[\p{L}][\p{L}\s.'-]{1,59}$/u;
 const CITY_OK = /^[\p{L}][\p{L}\s.'-]{1,39}$/u;
+const EMAIL_OK = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 /**
- * Name and city form. Shown right after a customer verifies their mobile number
+ * Name, city and email form. Shown right after a customer verifies their mobile number
  * (they cannot continue without it) and reused for editing from My Profile.
  */
 export default function ProfileDetailsForm({ onDone, onCancel, submitLabel = 'Save & Continue', intro = true }) {
   const { user, updateProfile, logout } = useAuth();
   const [name, setName] = useState(user?.name && user.name !== 'Artistry Member' ? user.name : '');
   const [city, setCity] = useState(user?.city || '');
+  const [email, setEmail] = useState(user?.email || '');
   const [errors, setErrors] = useState({});
 
   const submit = (e) => {
@@ -22,9 +24,10 @@ export default function ProfileDetailsForm({ onDone, onCancel, submitLabel = 'Sa
     const next = {};
     if (!NAME_OK.test(name.trim())) next.name = 'Enter your full name (letters only, at least 2 characters)';
     if (!CITY_OK.test(city.trim())) next.city = 'Enter your city';
+    if (!EMAIL_OK.test(email.trim())) next.email = 'Enter a valid email address';
     setErrors(next);
     if (Object.keys(next).length) return;
-    const saved = updateProfile({ name, city });
+    const saved = updateProfile({ name, city, email });
     onDone?.(saved);
   };
 
@@ -35,7 +38,7 @@ export default function ProfileDetailsForm({ onDone, onCancel, submitLabel = 'Sa
           <p className="flex items-center gap-2 text-xs text-rose-deep">
             <BadgeCheck size={15} /> {user?.mobile} verified
           </p>
-          <p className="mt-2 text-sm text-ink-soft">One last step — tell us your name and city so we can personalise your account and deliveries.</p>
+          <p className="mt-2 text-sm text-ink-soft">One last step — tell us your name, city and email so we can personalise your account and send order updates.</p>
         </>
       )}
 
@@ -49,6 +52,10 @@ export default function ProfileDetailsForm({ onDone, onCancel, submitLabel = 'Sa
         {CITIES.map((c) => <option key={c} value={c} />)}
       </datalist>
       {errors.city && <p id="pd-city-err" className="mt-1.5 text-xs text-rose-deep" role="alert">{errors.city}</p>}
+
+      <label className="label mt-4" htmlFor="pd-email">Email</label>
+      <input id="pd-email" type="email" value={email} onChange={(e) => setEmail(e.target.value.slice(0, 120))} inputMode="email" autoComplete="email" className="input" placeholder="you@example.com" aria-invalid={Boolean(errors.email)} aria-describedby={errors.email ? 'pd-email-err' : undefined} />
+      {errors.email && <p id="pd-email-err" className="mt-1.5 text-xs text-rose-deep" role="alert">{errors.email}</p>}
 
       <div className="mt-5 flex flex-wrap items-center gap-4">
         <button className="btn-primary">{submitLabel}</button>

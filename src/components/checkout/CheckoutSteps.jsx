@@ -47,7 +47,7 @@ export function LoginStep({ onDone }) {
     return () => clearTimeout(t);
   }, [cooldown]);
 
-  // Mobile verified but name & city not given yet → ask for them before continuing
+  // Mobile verified but name, city & email not given yet → ask for them before continuing
   if (user && !profileComplete) return <ProfileDetailsForm onDone={onDone} />;
 
   if (user) {
@@ -86,7 +86,7 @@ export function LoginStep({ onDone }) {
     setBusy(true);
     try {
       const signedIn = await verifyOtp(mobile, otp);
-      // New customers see the name & city form next; returning ones go straight on
+      // New customers see the name, city & email form next; returning ones go straight on
       if (isProfileComplete(signedIn)) onDone();
     } catch (ex) {
       setErr(ex.message);

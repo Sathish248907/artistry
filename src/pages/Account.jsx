@@ -60,7 +60,7 @@ function Profile({ user }) {
       action={
         !editing && (
           <button onClick={() => setEditing(true)} className="text-[11px] uppercase tracking-[0.18em] text-rose-deep hover:underline">
-            Edit name &amp; city
+            Edit profile
           </button>
         )
       }
@@ -73,7 +73,7 @@ function Profile({ user }) {
             onCancel={() => setEditing(false)}
             onDone={() => {
               setEditing(false);
-              toast({ title: 'Profile updated', body: 'Your name and city have been saved.' });
+              toast({ title: 'Profile updated', body: 'Your details have been saved.' });
             }}
           />
         </div>
@@ -82,8 +82,8 @@ function Profile({ user }) {
           {[
             ['Name', user.name],
             ['Mobile', user.mobile],
+            ['Email', user.email],
             ['City', user.city],
-            ['Email', user.email || 'Not added'],
           ].map(([k, v]) => (
             <div key={k} className="rounded-2xl border border-rose-light/60 bg-ivory p-5">
               <p className="text-[10px] uppercase tracking-[0.16em] text-ink-faint">{k}</p>
