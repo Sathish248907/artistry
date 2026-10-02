@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bell, Calendar, ChevronRight, Coins, Heart, HelpCircle, LogOut, MapPin, Package, PenTool, Search, User } from 'lucide-react';
+import { Bell, Calendar, ChevronRight, Coins, Heart, HelpCircle, LogOut, MapPin, Package, PenTool, RotateCcw, Search, User } from 'lucide-react';
 import SmartImage from '../components/common/SmartImage';
 import { LoginStep } from '../components/checkout/CheckoutSteps';
 import ProfileDetailsForm from '../components/account/ProfileDetailsForm';
@@ -18,6 +18,7 @@ import { findItem } from '../data/products';
 import useLocalStorage from '../hooks/useLocalStorage';
 import { classNames, formatDate, formatINR } from '../utils/format';
 import { EASE } from '../components/common/Reveal';
+import { BackendAddresses, BackendOrders, BackendProfile, BackendReturns } from '../components/account/BackendAccount';
 
 const TABS = [
   ['profile', 'My Profile', User],
@@ -407,13 +408,19 @@ function Support() {
 
 const PANELS = { profile: Profile, orders: Orders, wishlist: WishlistTab, addresses: Addresses, appointments: Appointments, searches: Searches, notifications: Notifications, savings: Savings, designs: Designs, support: Support };
 
+// With the backend connected, profile, orders and addresses are real; returns & refunds get their own tab.
+const BACKEND_PANELS = { ...PANELS, profile: BackendProfile, orders: BackendOrders, addresses: BackendAddresses, returns: BackendReturns };
+const BACKEND_TABS = [...TABS.slice(0, 4), ['returns', 'Returns & Refunds', RotateCcw], ...TABS.slice(4)];
+
 export default function Account() {
-  const { user, profileComplete, logout } = useAuth();
+  const { user, profileComplete, logout, backend, status } = useAuth();
   const { toast } = useUI();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
-  const tab = PANELS[params.get('tab')] ? params.get('tab') : 'profile';
-  const Active = PANELS[tab];
+  const panels = backend ? BACKEND_PANELS : PANELS;
+  const tabs = backend ? BACKEND_TABS : TABS;
+  const tab = panels[params.get('tab')] ? params.get('tab') : 'profile';
+  const Active = panels[tab];
 
   const doLogout = async () => {
     await logout();
@@ -434,7 +441,9 @@ export default function Account() {
 
       <section className="w-full bg-gradient-to-b from-cream to-ivory pb-24 pt-10">
         <div className="shell">
-          {!profileComplete ? (
+          {status === 'checking' ? (
+            <div className="mx-auto h-40 max-w-lg animate-pulse rounded-[28px] bg-rose-blush/50" />
+          ) : !profileComplete ? (
             <div className="mx-auto max-w-lg rounded-[28px] border border-rose-light/60 bg-ivory p-8 shadow-soft">
               <h2 className="font-display text-3xl">{user ? 'Complete your profile' : 'Sign in to your account'}</h2>
               <div className="mt-4">
@@ -444,7 +453,7 @@ export default function Account() {
           ) : (
             <div className="grid gap-8 lg:grid-cols-[280px_1fr] [&>*]:min-w-0">
               <nav className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 lg:mx-0 lg:flex-col lg:gap-1 lg:overflow-visible lg:px-0" aria-label="Account">
-                {TABS.map(([id, label, I]) => (
+                {tabs.map(([id, label, I]) => (
                   <button key={id} onClick={() => setParams({ tab: id })} className={classNames('relative flex shrink-0 items-center gap-3 rounded-full px-4 py-2.5 text-sm transition lg:rounded-2xl lg:py-3', tab === id ? 'text-rose-deep' : 'text-ink-soft hover:bg-rose-blush/40')}>
                     {tab === id && <motion.span layoutId="acct-tab" className="absolute inset-0 rounded-full border border-rose-light bg-ivory shadow-soft lg:rounded-2xl" transition={{ type: 'spring', stiffness: 400, damping: 34 }} />}
                     <I size={16} className="relative" />

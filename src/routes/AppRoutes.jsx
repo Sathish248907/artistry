@@ -17,6 +17,7 @@ const Cart = lazy(() => import('../pages/Cart'));
 const Checkout = lazy(() => import('../pages/Checkout'));
 const Wishlist = lazy(() => import('../pages/Wishlist'));
 const Account = lazy(() => import('../pages/Account'));
+const OrderDetails = lazy(() => import('../pages/OrderDetails'));
 const StoreLocator = lazy(() => import('../pages/StoreLocator'));
 const Appointment = lazy(() => import('../pages/Appointment'));
 const GrowCapital = lazy(() => import('../pages/GrowCapital'));
@@ -33,6 +34,12 @@ const AdminGoldRates = lazy(() => import('../admin/pages/GoldRates'));
 const AdminGoldRateHistory = lazy(() => import('../admin/pages/GoldRateHistory'));
 const AdminCharges = lazy(() => import('../admin/pages/Charges'));
 const AdminCalculator = lazy(() => import('../admin/pages/PriceCalculator'));
+const AdminOrdersDashboard = lazy(() => import('../admin/pages/OrdersDashboard'));
+const AdminOrders = lazy(() => import('../admin/pages/Orders'));
+const AdminOrderDetail = lazy(() => import('../admin/pages/OrderDetail'));
+const AdminPayments = lazy(() => import('../admin/pages/Payments'));
+const AdminReturns = lazy(() => import('../admin/pages/Returns'));
+const AdminRefunds = lazy(() => import('../admin/pages/Refunds'));
 
 export default function AppRoutes() {
   return (
@@ -54,6 +61,12 @@ export default function AppRoutes() {
         <Route path="gold-rate-history" element={<AdminGoldRateHistory />} />
         <Route path="charges" element={<AdminCharges />} />
         <Route path="calculator" element={<AdminCalculator />} />
+        <Route path="order-dashboard" element={<AdminOrdersDashboard />} />
+        <Route path="orders" element={<AdminOrders />} />
+        <Route path="orders/:id" element={<AdminOrderDetail />} />
+        <Route path="payments" element={<AdminPayments />} />
+        <Route path="returns" element={<AdminReturns />} />
+        <Route path="refunds" element={<AdminRefunds />} />
         <Route path="*" element={<AdminDashboard />} />
       </Route>
 
@@ -71,6 +84,7 @@ export default function AppRoutes() {
         <Route path="checkout" element={<Checkout />} />
         <Route path="wishlist" element={<Wishlist />} />
         <Route path="account" element={<Account />} />
+        <Route path="account/orders/:id" element={<OrderDetails />} />
         <Route path="stores" element={<StoreLocator />} />
         <Route path="appointment" element={<Appointment />} />
         <Route path="grow-capital" element={<GrowCapital />} />

@@ -9,11 +9,19 @@ import OrderSummary from '../components/cart/OrderSummary';
 import { AddressStep, DELIVERY_OPTIONS, DeliveryStep, LoginStep, PaymentStep, STEPS, Stepper } from '../components/checkout/CheckoutSteps';
 import { EASE } from '../components/common/Reveal';
 import { useShop } from '../context/ShopContext';
+import { useAuth } from '../context/AuthContext';
+import BackendCheckout from '../components/checkout/BackendCheckout';
 import { orderService, paymentService } from '../services';
 import { STORES } from '../data/content';
 import { addBusinessDays, formatDate, formatINR } from '../utils/format';
 
+/** With the backend connected, checkout runs on the server; otherwise the original on-device checkout. */
 export default function Checkout() {
+  const { backend } = useAuth();
+  return backend ? <BackendCheckout /> : <DeviceCheckout />;
+}
+
+function DeviceCheckout() {
   const { cart, totals, clearCart } = useShop();
   const [step, setStep] = useState(0);
   const [address, setAddress] = useState(null);

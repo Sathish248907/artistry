@@ -8,6 +8,7 @@ const STATIC_ROUTES = [
   'cart', 'checkout', 'wishlist', 'account', 'stores', 'appointment', 'grow-capital',
   'admin', 'admin/inventory', 'admin/stock', 'admin/history', 'admin/low-stock', 'admin/gold-rates',
   'admin/gold-rate-history', 'admin/charges', 'admin/calculator',
+  'admin/order-dashboard', 'admin/orders', 'admin/payments', 'admin/returns', 'admin/refunds',
 ];
 
 // Product slugs mirror slugify() in src/utils/format.js, applied to product names in src/data/products.js

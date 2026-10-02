@@ -8,14 +8,16 @@ const INK = '#4F3337';
 const MUTED = '#86686C';
 
 /** Round an axis to clean steps: 5,800 · 6,000 · 6,200 … */
-const niceTicks = (min, max, target = 4) => {
+const niceTicks = (min, max, target = 4, whole = false) => {
   if (min === max) {
     const pad = Math.max(1, Math.abs(min) * 0.02);
-    return niceTicks(min - pad, max + pad, target);
+    return niceTicks(whole ? Math.max(0, min - 1) : min - pad, max + pad, target, whole);
   }
   const rough = (max - min) / target;
   const magnitude = 10 ** Math.floor(Math.log10(rough));
-  const step = [1, 2, 2.5, 5, 10].map((m) => m * magnitude).find((s) => s >= rough) || 10 * magnitude;
+  let step = [1, 2, 2.5, 5, 10].map((m) => m * magnitude).find((s) => s >= rough) || 10 * magnitude;
+  // Counts (orders, units) only make sense on whole-number steps
+  if (whole) step = Math.max(1, Math.ceil(step));
   const start = Math.floor(min / step) * step;
   const ticks = [];
   for (let v = start; v <= max + step * 0.999; v += step) ticks.push(Math.round(v * 100) / 100);
@@ -37,9 +39,12 @@ const useWidth = () => {
 /**
  * Gold rate over time — one series, so no legend: the card title names it.
  * Pointer or arrow keys move a crosshair; every value is also available in the table view.
- * @param {{date: string, ratePerGram: number}[]} points
+ * @param {{date: string, value: number}[]} points
+ * @param {string} label       what one value is, e.g. "22K per gram" or "Revenue"
+ * @param {(n:number)=>string} format      tooltip and table
+ * @param {(n:number)=>string} axisFormat  axis ticks and the end label
  */
-export function RateTrendChart({ points, purity }) {
+export function TrendChart({ points, label, format = money, axisFormat = count, emptyText = 'No data yet.', minZero = false, wholeNumbers = false }) {
   const [ref, width] = useWidth();
   const [active, setActive] = useState(null);
   const [asTable, setAsTable] = useState(false);
@@ -52,8 +57,8 @@ export function RateTrendChart({ points, purity }) {
 
   const scale = useMemo(() => {
     if (!points.length) return null;
-    const values = points.map((p) => p.ratePerGram);
-    const ticks = niceTicks(Math.min(...values), Math.max(...values));
+    const values = points.map((p) => p.value);
+    const ticks = niceTicks(minZero ? 0 : Math.min(...values), Math.max(...values), 4, wholeNumbers);
     const lo = ticks[0];
     const hi = ticks[ticks.length - 1];
     const x = (i) => margin.left + (points.length === 1 ? innerW / 2 : (i / (points.length - 1)) * innerW);
@@ -62,7 +67,7 @@ export function RateTrendChart({ points, purity }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [points, innerW, innerH]);
 
-  if (!points.length) return <p className="py-8 text-center text-sm text-ink-soft">No {purity} rate has been recorded yet.</p>;
+  if (!points.length) return <p className="py-8 text-center text-sm text-ink-soft">{emptyText}</p>;
 
   const last = points[points.length - 1];
   const first = points[0];
@@ -81,14 +86,14 @@ export function RateTrendChart({ points, purity }) {
             <thead>
               <tr className="border-b border-rose-light/60 text-[10px] uppercase tracking-[0.16em] text-ink-faint">
                 <th scope="col" className="py-2 font-medium">Date</th>
-                <th scope="col" className="py-2 text-right font-medium">{purity} per gram</th>
+                <th scope="col" className="py-2 text-right font-medium">{label}</th>
               </tr>
             </thead>
             <tbody>
               {[...points].reverse().map((p) => (
                 <tr key={p.date} className="border-b border-rose-light/30 last:border-0">
                   <td className="py-1.5 text-ink">{dateOnly(p.date)}</td>
-                  <td className="py-1.5 text-right tabular-nums text-ink">{money(p.ratePerGram)}</td>
+                  <td className="py-1.5 text-right tabular-nums text-ink">{format(p.value)}</td>
                 </tr>
               ))}
             </tbody>
@@ -98,7 +103,7 @@ export function RateTrendChart({ points, purity }) {
     );
   }
 
-  const path = scale ? points.map((p, i) => `${i ? 'L' : 'M'}${scale.x(i).toFixed(1)},${scale.y(p.ratePerGram).toFixed(1)}`).join(' ') : '';
+  const path = scale ? points.map((p, i) => `${i ? 'L' : 'M'}${scale.x(i).toFixed(1)},${scale.y(p.value).toFixed(1)}`).join(' ') : '';
   const baseY = margin.top + innerH;
   const area = scale && points.length > 1 ? `${path} L${scale.x(points.length - 1).toFixed(1)},${baseY} L${scale.x(0).toFixed(1)},${baseY} Z` : '';
   const shown = active == null ? null : points[active];
@@ -123,7 +128,7 @@ export function RateTrendChart({ points, purity }) {
     <div>
       <div className="mb-1 flex items-center justify-between gap-3">
         <p id={titleId} className="text-xs text-ink-soft">
-          {points.length === 1 ? `${dateOnly(first.date)} · the line appears once there are rates on more than one day` : `${dateOnly(first.date)} – ${dateOnly(last.date)}`}
+          {points.length === 1 ? `${dateOnly(first.date)} · the line appears once there is more than one day` : `${dateOnly(first.date)} – ${dateOnly(last.date)}`}
         </p>
         {toggle}
       </div>
@@ -134,7 +139,7 @@ export function RateTrendChart({ points, purity }) {
             height={height}
             role="img"
             aria-labelledby={titleId}
-            aria-label={`${purity} gold rate per gram, ${dateOnly(first.date)} to ${dateOnly(last.date)}. Latest ${money(last.ratePerGram)}. Use the arrow keys to read each day.`}
+            aria-label={`${label}, ${dateOnly(first.date)} to ${dateOnly(last.date)}. Latest ${format(last.value)}. Use the arrow keys to read each day.`}
             tabIndex={0}
             onKeyDown={onKey}
             onBlur={() => setActive(null)}
@@ -146,7 +151,7 @@ export function RateTrendChart({ points, purity }) {
               <g key={tick}>
                 <line x1={margin.left} x2={margin.left + innerW} y1={scale.y(tick)} y2={scale.y(tick)} stroke={GRID} strokeWidth="1" />
                 <text x={margin.left - 8} y={scale.y(tick)} textAnchor="end" dominantBaseline="middle" fontSize="11" fill={MUTED} style={{ fontVariantNumeric: 'tabular-nums' }}>
-                  {count(tick)}
+                  {axisFormat(tick)}
                 </text>
               </g>
             ))}
@@ -159,30 +164,35 @@ export function RateTrendChart({ points, purity }) {
             {points.length > 1 && <path d={path} fill="none" stroke={LINE} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />}
 
             {/* End marker with a surface ring, and the one direct label: the latest value */}
-            <circle cx={scale.x(points.length - 1)} cy={scale.y(last.ratePerGram)} r="6" fill={SURFACE} />
-            <circle cx={scale.x(points.length - 1)} cy={scale.y(last.ratePerGram)} r="4" fill={LINE} />
-            <text x={scale.x(points.length - 1) + 10} y={scale.y(last.ratePerGram)} dominantBaseline="middle" fontSize="12" fontWeight="600" fill={INK}>
-              {count(last.ratePerGram)}
+            <circle cx={scale.x(points.length - 1)} cy={scale.y(last.value)} r="6" fill={SURFACE} />
+            <circle cx={scale.x(points.length - 1)} cy={scale.y(last.value)} r="4" fill={LINE} />
+            <text x={scale.x(points.length - 1) + 10} y={scale.y(last.value)} dominantBaseline="middle" fontSize="12" fontWeight="600" fill={INK}>
+              {axisFormat(last.value)}
             </text>
 
             {shown && (
               <g pointerEvents="none">
                 <line x1={scale.x(active)} x2={scale.x(active)} y1={margin.top} y2={baseY} stroke={MUTED} strokeWidth="1" />
-                <circle cx={scale.x(active)} cy={scale.y(shown.ratePerGram)} r="6" fill={SURFACE} />
-                <circle cx={scale.x(active)} cy={scale.y(shown.ratePerGram)} r="4" fill={LINE} />
+                <circle cx={scale.x(active)} cy={scale.y(shown.value)} r="6" fill={SURFACE} />
+                <circle cx={scale.x(active)} cy={scale.y(shown.value)} r="4" fill={LINE} />
               </g>
             )}
           </svg>
         )}
         {shown && (
           <div className="pointer-events-none absolute top-0 -translate-x-1/2 rounded-lg border border-rose-light bg-ivory px-3 py-1.5 text-center shadow-soft" style={{ left: tipLeft }} role="status">
-            <p className="text-sm font-semibold text-ink">{money(shown.ratePerGram)}</p>
+            <p className="text-sm font-semibold text-ink">{format(shown.value)}</p>
             <p className="text-[11px] text-ink-soft">{dateOnly(shown.date)}</p>
           </div>
         )}
       </div>
     </div>
   );
+}
+
+/** Gold rate per gram over time (one point per day). */
+export function RateTrendChart({ points, purity }) {
+  return <TrendChart points={points.map((p) => ({ date: p.date, value: p.ratePerGram }))} label={`${purity} per gram`} emptyText={`No ${purity} rate has been recorded yet.`} />;
 }
 
 /**
@@ -242,5 +252,26 @@ export function StockStatusBar({ inStock, lowStock, outOfStock }) {
         ))}
       </ul>
     </div>
+  );
+}
+
+/**
+ * Counts per category as horizontal bars, sorted as given. Nominal categories, so every bar wears the same
+ * colour; the label and the number beside each bar carry the meaning.
+ * @param {{key: string, label: string, value: number}[]} rows
+ */
+export function BarList({ rows, format = count, emptyText = 'Nothing to show yet.' }) {
+  const max = Math.max(0, ...rows.map((r) => r.value));
+  if (!max) return <p className="py-6 text-center text-sm text-ink-soft">{emptyText}</p>;
+  return (
+    <ul className="space-y-2.5">
+      {rows.map((r) => (
+        <li key={r.key} className="grid grid-cols-[8.5rem_1fr_3.5rem] items-center gap-3 text-sm" title={`${r.label}: ${format(r.value)}`}>
+          <span className="truncate text-ink-soft">{r.label}</span>
+          <span className="h-3 rounded-r" style={{ width: r.value ? `max(4px, ${(r.value / max) * 100}%)` : 0, background: LINE }} aria-hidden="true" />
+          <span className="text-right font-semibold tabular-nums text-ink">{format(r.value)}</span>
+        </li>
+      ))}
+    </ul>
   );
 }

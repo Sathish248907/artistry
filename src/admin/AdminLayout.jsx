@@ -1,6 +1,6 @@
 import { Suspense, useState } from 'react';
 import { Link, NavLink, Outlet } from 'react-router-dom';
-import { ArrowLeftRight, Calculator, Coins, ExternalLink, History, LayoutDashboard, Loader2, LogOut, Package, Percent, TrendingUp, TriangleAlert } from 'lucide-react';
+import { ArrowLeftRight, BarChart3, Calculator, Coins, CreditCard, ExternalLink, History, LayoutDashboard, Loader2, LogOut, Package, Percent, RotateCcw, ShoppingBag, TrendingUp, TriangleAlert, Undo2 } from 'lucide-react';
 import Toaster from '../components/common/Toast';
 import { BRAND } from '../data/brand';
 import { classNames } from '../utils/format';
@@ -9,7 +9,7 @@ import { backendConfigured } from './api';
 import { Field, Notice, Spinner } from './ui';
 
 const NAV = [
-  { to: '/admin', end: true, label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/admin', end: true, label: 'Dashboard', icon: LayoutDashboard, group: 'Inventory & gold rates' },
   { to: '/admin/inventory', label: 'Inventory', icon: Package },
   { to: '/admin/stock', label: 'Stock adjustment', icon: ArrowLeftRight },
   { to: '/admin/history', label: 'Inventory history', icon: History },
@@ -18,6 +18,11 @@ const NAV = [
   { to: '/admin/gold-rate-history', label: 'Gold rate history', icon: TrendingUp },
   { to: '/admin/charges', label: 'Making & wastage', icon: Percent },
   { to: '/admin/calculator', label: 'Price calculator', icon: Calculator },
+  { to: '/admin/order-dashboard', label: 'Order dashboard', icon: BarChart3, group: 'Orders' },
+  { to: '/admin/orders', label: 'Orders', icon: ShoppingBag },
+  { to: '/admin/payments', label: 'Payments', icon: CreditCard },
+  { to: '/admin/returns', label: 'Returns', icon: RotateCcw },
+  { to: '/admin/refunds', label: 'Refunds', icon: Undo2 },
 ];
 
 function Frame({ children }) {
@@ -133,7 +138,8 @@ function Shell() {
 
       <div className="flex w-full flex-1">
         <nav className="sticky top-[57px] hidden h-[calc(100vh-57px)] w-60 shrink-0 flex-col gap-1 overflow-y-auto border-r border-rose-light/60 p-3 lg:flex" aria-label="Admin sections">
-          {NAV.map(({ to, end, label, icon: Icon }) => (
+          {NAV.map(({ to, end, label, icon: Icon, group }) => [
+            group && <p key={`g-${group}`} className="mt-3 px-3 pb-1 text-[10px] uppercase tracking-[0.18em] text-ink-faint first:mt-0">{group}</p>,
             <NavLink
               key={to}
               to={to}
@@ -141,8 +147,8 @@ function Shell() {
               className={({ isActive }) => classNames('flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition', isActive ? 'border border-rose-light bg-rose-blush/60 text-rose-deep' : 'border border-transparent text-ink-soft hover:bg-rose-blush/40')}
             >
               <Icon size={16} /> {label}
-            </NavLink>
-          ))}
+            </NavLink>,
+          ])}
         </nav>
         <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
           <Suspense fallback={<Spinner />}>

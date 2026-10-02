@@ -30,11 +30,16 @@ export function useAsync(load, deps = []) {
 
 /* ---------------------------------------------------------------- format */
 
-const inr = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2, minimumFractionDigits: 0 });
+const inrWhole = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
+const inrPaise = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const compact = new Intl.NumberFormat('en-IN', { notation: 'compact', maximumFractionDigits: 1 });
 const whole = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 });
 
-export const money = (value) => inr.format(Number(value) || 0);
+/** Whole rupees show no decimals; anything else always shows two (₹88,465.20). */
+export const money = (value) => {
+  const n = Math.round((Number(value) || 0) * 100) / 100;
+  return Number.isInteger(n) ? inrWhole.format(n) : inrPaise.format(n);
+};
 export const moneyCompact = (value) => `₹${compact.format(Number(value) || 0)}`;
 export const count = (value) => whole.format(Number(value) || 0);
 export const signed = (value) => `${value > 0 ? '+' : value < 0 ? '−' : ''}${whole.format(Math.abs(Number(value) || 0))}`;
