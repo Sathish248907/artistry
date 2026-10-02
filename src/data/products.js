@@ -112,6 +112,18 @@ export const COIN_ITEMS = COINS.flatMap((c) =>
 
 export const findItem = (id) => productById(id) || COIN_ITEMS.find((c) => c.id === id);
 
+/**
+ * The SKU an item has in the Artistry backend (see scripts/export-catalog.mjs and the backend's
+ * import:storefront script). Coins share a code across weights, so their weight is part of the SKU.
+ */
+export const storefrontSku = (item) => (item.isCoin ? `${item.code}-${item.weight}G` : item.code).toUpperCase();
+
+/** The storefront item for a backend SKU. */
+export const itemBySku = (sku) => {
+  const code = String(sku || '').toUpperCase();
+  return PRODUCTS.find((p) => storefrontSku(p) === code) || COIN_ITEMS.find((c) => storefrontSku(c) === code) || null;
+};
+
 export const FILTER_OPTIONS = {
   purity: ['24K', '22K', '18K'],
   weight: [

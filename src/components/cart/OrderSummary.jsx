@@ -1,24 +1,17 @@
 import { useState } from 'react';
 import { Tag } from 'lucide-react';
 import { useShop } from '../../context/ShopContext';
-import { offerService } from '../../services';
 import { formatINR } from '../../utils/format';
 
 export default function OrderSummary({ children, showCoupon = true, extras = [] }) {
-  const { totals, coupon, setCoupon, cartCount } = useShop();
+  const { totals, coupon, applyCoupon, cartCount } = useShop();
   const [code, setCode] = useState('');
   const [msg, setMsg] = useState(null);
 
   const apply = async (e) => {
     e.preventDefault();
     if (!code.trim()) return;
-    const res = await offerService.validate(code.trim());
-    if (res.valid) {
-      setCoupon(res.code);
-      setMsg({ ok: true, text: `${res.code} applied — 10% off making charges.` });
-    } else {
-      setMsg({ ok: false, text: 'This code isn’t valid. Try GOLDEN10.' });
-    }
+    setMsg(await applyCoupon(code.trim()));
   };
 
   const rows = [
@@ -48,7 +41,7 @@ export default function OrderSummary({ children, showCoupon = true, extras = [] 
               <span className="flex items-center gap-2 text-rose-deep">
                 <Tag size={15} /> {coupon}
               </span>
-              <button type="button" onClick={() => { setCoupon(null); setMsg(null); }} className="text-[11px] uppercase tracking-[0.16em] text-ink-faint hover:text-rose-deep">
+              <button type="button" onClick={async () => { await applyCoupon(null); setMsg(null); }} className="text-[11px] uppercase tracking-[0.16em] text-ink-faint hover:text-rose-deep">
                 Remove
               </button>
             </div>

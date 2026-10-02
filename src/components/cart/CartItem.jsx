@@ -16,7 +16,9 @@ export default function CartItem({ line, compact = false }) {
   return (
     <motion.li layout initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: 40, transition: { duration: 0.25 } }} className="flex gap-4 py-5">
       <Link to={to} className="shrink-0">
-        {p.isCoin ? (
+        {p.backendOnly ? (
+          <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-rose-blush text-xs text-ink-faint sm:h-28 sm:w-28">{p.purity}</div>
+        ) : p.isCoin ? (
           <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-gradient-to-br from-ivory to-champagne/60 sm:h-28 sm:w-28">
             <CoinArt motif={p.coin.motif} weight={p.weight} shape={p.coin.shape} size={compact ? 70 : 84} />
           </div>
@@ -33,8 +35,9 @@ export default function CartItem({ line, compact = false }) {
             <p className="mt-0.5 text-xs text-ink-faint">
               {p.purity} · {p.weight} g{line.qty > 1 && ` · ${(p.weight * line.qty).toFixed(2)} g total`}
             </p>
+            {line.availability && !line.availability.available && <p className="mt-1 text-xs text-rose-deep" role="alert">{line.availability.reason}</p>}
           </div>
-          <p className="shrink-0 text-sm font-medium tabular-nums text-ink">{formatINR(productPrice(p) * line.qty)}</p>
+          <p className="shrink-0 text-sm font-medium tabular-nums text-ink">{formatINR(line.lineTotal ?? productPrice(p) * line.qty)}</p>
         </div>
         <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-3">
           <QuantityStepper value={line.qty} onChange={(q) => updateQty(p.id, q)} small />

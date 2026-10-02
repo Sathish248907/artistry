@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Building2, Check, CreditCard, Home, Loader2, MapPin, Plus, Smartphone, Store, Truck, Wallet, Zap } from 'lucide-react';
 import { isProfileComplete, useAuth } from '../../context/AuthContext';
 import ProfileDetailsForm from '../account/ProfileDetailsForm';
+import BackendLogin from '../account/BackendLogin';
 import { customerService } from '../../services';
 import { STORES } from '../../data/content';
 import { addBusinessDays, classNames, formatDate, formatINR } from '../../utils/format';
@@ -31,7 +32,30 @@ export function Stepper({ step }) {
   );
 }
 
-export function LoginStep({ onDone }) {
+export function LoginStep(props) {
+  const { backend } = useAuth();
+  return backend ? <BackendLoginStep {...props} /> : <DeviceLoginStep {...props} />;
+}
+
+/** Backend mode: real customer accounts. */
+function BackendLoginStep({ onDone }) {
+  const { user } = useAuth();
+  if (user) {
+    return (
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-rose-light/60 bg-rose-blush/40 p-5">
+        <div>
+          <p className="text-sm text-ink-soft">Signed in as</p>
+          <p className="font-display text-2xl">{user.name}</p>
+          <p className="text-xs text-ink-faint">{user.email}{user.mobile && ` · ${user.mobile}`}</p>
+        </div>
+        <button onClick={() => onDone(user)} className="btn-primary">Continue</button>
+      </div>
+    );
+  }
+  return <BackendLogin onDone={onDone} />;
+}
+
+function DeviceLoginStep({ onDone }) {
   const { user, profileComplete, requestOtp, verifyOtp, otpLive } = useAuth();
   const [mobile, setMobile] = useState('');
   const [otp, setOtp] = useState('');
